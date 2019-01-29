@@ -1,5 +1,3 @@
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 import mnist
@@ -71,17 +69,28 @@ def forward_pass(x, w):
     g = 1 /(1 + np.exp(-a))
     return g
 
-def gradient_decent(X_batch, outputs, targets, weights, learning_rate):
+def L2_regularization(weights, strength):
+    return weights * 2 * strength
+
+
+def gradient_decent(X_batch, outputs, targets, weights, learning_rate, reg_strength):
     N = X_batch.shape[0]
     assert outputs.shape == targets.shape
     dw = - X_batch * (targets - outputs)
     dw = dw.mean(axis=0)
     dw = dw.reshape(-1, 1)
+
+    #L2_regularization
+    dw_reg = L2_regularization(weights, reg_strength)
+    assert dw.shape == dw_reg.shape
+    dw -= dw_reg
+
+
     assert dw.shape == weights.shape
     weights = weights - learning_rate * dw
     return weights
 
-def training_loop(weights, epochs, batch_size, learning_rate):
+def training_loop(weights, epochs, batch_size, learning_rate, reg_strength):
     num_batches_per_epoch = X_train.shape[0] // batch_size
     check_step = num_batches_per_epoch // 10
     training_it = 0
@@ -92,27 +101,17 @@ def training_loop(weights, epochs, batch_size, learning_rate):
             Y_batch = Y_train[i*batch_size:(i+1)*batch_size]
             outputs = forward_pass(X_batch, weights)
             #print('outputs', outputs)
-            weights = gradient_decent(X_batch, outputs, Y_batch, weights, learning_rate)
+            weights = gradient_decent(X_batch, outputs, Y_batch, weights, learning_rate, reg_strength)
 
             if i % check_step == 0:
                 TRAINING_STEP.append(training_it)
+                if reg_strength == 0.01:
+                    PERCENT_CLASSIFIED_CORRECT_VAL_1.append(test_classification(X_val, Y_val, weights))
+                elif reg_strength == 0.001:
+                    PERCENT_CLASSIFIED_CORRECT_VAL_2.append(test_classification(X_val, Y_val, weights))
+                elif reg_strength == 0.0001:
+                    PERCENT_CLASSIFIED_CORRECT_VAL_3.append(test_classification(X_val, Y_val, weights))
 
-                train_out = forward_pass(X_train, weights)
-                train_loss = ce_loss(Y_train, train_out)
-                TRAIN_LOSS.append(train_loss)
-
-                val_out = forward_pass(X_val, weights)
-                val_loss = ce_loss(Y_val, val_out)
-                VAL_LOSS.append(val_loss)
-
-                test_out = forward_pass(X_test, weights)
-                test_loss = ce_loss(Y_test, test_out)
-                TEST_LOSS.append(test_loss)
-
-
-                PERCENT_CLASSIFIED_CORRECT_TRAIN.append(test_classification(X_train, Y_train, weights))
-                PERCENT_CLASSIFIED_CORRECT_TEST.append(test_classification(X_test, Y_test, weights))
-                PERCENT_CLASSIFIED_CORRECT_VAL.append(test_classification(X_val, Y_val, weights))
     return weights
 
 def test_classification(X_set, Y_set, weights):
@@ -125,6 +124,13 @@ def test_classification(X_set, Y_set, weights):
             numberOfCorrect += 1
     return numberOfCorrect / Y_set.shape[0]
 
+def plot_weights_as_picture(weights):
+    print('hei', weights)
+
+
+
+
+
 
 
 #Run only once
@@ -136,19 +142,13 @@ X_train, Y_train, X_test, Y_test = mnist.load()
 X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.1)
 
 #Resize
-X_test = X_test[2000:]
-Y_test = Y_test[2000:]
-X_train = X_train[:20000]
-Y_train = Y_train[:20000]
+# X_test = X_test[:5000]
+# Y_test = Y_test[:5000]
 
 #Filter, add bias, reshape Y_set
 X_train, Y_train = prepare_sets(X_train, Y_train)
 X_val, Y_val = prepare_sets(X_val, Y_val)
 X_test, Y_test = prepare_sets(X_test, Y_test)
-
-
-
-
 
 #Change values of Y_set from 2 and 3 to 1 and 0
 set_target(Y_train)
@@ -157,53 +157,45 @@ set_target(Y_val)
 
 #Initializing weights
 num_features = X_train.shape[1]
-w = np.zeros((num_features, 1))
-
-
-
-#output = forward_pass(X_train, w)
-#plot_error_function(Y_train, output)
+w1 = np.zeros((num_features, 1))
+w2 = np.zeros((num_features, 1))
+w3 = np.zeros((num_features, 1))
 
 
 epochs = 5
-batch_size = 1 #stochastic
-learning_rate = 0.000000002
+batch_size = 50 #stochastic
+learning_rate = 0.0001
+reg_strength_1 = 0.01
+reg_strength_2 = 0.001
+reg_strength_3 = 0.0001
 
 TRAINING_STEP = []
-TRAIN_LOSS = []
-VAL_LOSS = []
-TEST_LOSS = []
-PERCENT_CLASSIFIED_CORRECT_TRAIN = []
-PERCENT_CLASSIFIED_CORRECT_VAL = []
-PERCENT_CLASSIFIED_CORRECT_TEST = []
+PERCENT_CLASSIFIED_CORRECT_VAL_1 = []
+PERCENT_CLASSIFIED_CORRECT_VAL_2 = []
+PERCENT_CLASSIFIED_CORRECT_VAL_3 = []
 
-w = training_loop(w, epochs, batch_size, learning_rate)
+w1 = training_loop(w1, epochs, batch_size, learning_rate, reg_strength_1)
+TRAINING_STEP = []
+w2 = training_loop(w2, epochs, batch_size, learning_rate, reg_strength_2)
+TRAINING_STEP = []
+w3 = training_loop(w3, epochs, batch_size, learning_rate, reg_strength_3)
 
-#Plot Cross Entropy Loss function
-plt.figure(figsize=(12, 8 ))
-plt.ylim([0, 1])
-plt.ylabel("CE Loss")
-plt.xlabel("Training steps")
-plt.plot(TRAINING_STEP, TRAIN_LOSS, label="Training loss")
-plt.plot(TRAINING_STEP, VAL_LOSS, label="Validation loss")
-plt.plot(TRAINING_STEP, TEST_LOSS, label="Test loss")
-plt.legend() # Shows graph labels
-plt.show()
-
+print('1', PERCENT_CLASSIFIED_CORRECT_VAL_1)
+print('2', PERCENT_CLASSIFIED_CORRECT_VAL_3)
+print('3', PERCENT_CLASSIFIED_CORRECT_VAL_2)
 
 #Plot percent
 plt.figure(figsize=(12, 8 ))
 plt.ylim([0, 1])
 plt.ylabel("Percentage Classified Correctly ")
 plt.xlabel("Training steps")
-plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_TRAIN, label="Training set")
-plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_VAL, label="Validation set")
-plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_TEST, label="Test set")
+plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_VAL_1, label="Regularization strength = 0.01")
+plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_VAL_2, label="Regularization strength = 0.001")
+plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_VAL_3, label="Regularization strength = 0.0001")
 plt.legend() # Shows graph labels
 plt.show()
 
-
 #Final percentage
-print('Training percentage correct:', test_classification(X_train, Y_train, w))
-print('Valuation percentage correct:', test_classification(X_val, Y_val, w))
-print('Test percentage correct:', test_classification(X_test, Y_test, w))
+print('Valuation percentage correct with regularization strength = 0.01:', test_classification(X_val, Y_val, w1))
+print('Valuation percentage correct with regularization strength = 0.001:', test_classification(X_val, Y_val, w2))
+print('Valuation percentage correct with regularization strength = 0.0001:', test_classification(X_val, Y_val, w3))
