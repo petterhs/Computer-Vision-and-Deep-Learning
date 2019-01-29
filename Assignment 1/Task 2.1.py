@@ -83,7 +83,7 @@ def gradient_decent(X_batch, outputs, targets, weights, learning_rate):
 
 def training_loop(weights, epochs, batch_size, learning_rate):
     num_batches_per_epoch = X_train.shape[0] // batch_size
-    check_step = num_batches_per_epoch // 10
+    check_step = num_batches_per_epoch // 100
     training_it = 0
     for epoch in range(epochs):
         for i in range(num_batches_per_epoch):
@@ -146,10 +146,6 @@ X_train, Y_train = prepare_sets(X_train, Y_train)
 X_val, Y_val = prepare_sets(X_val, Y_val)
 X_test, Y_test = prepare_sets(X_test, Y_test)
 
-
-
-
-
 #Change values of Y_set from 2 and 3 to 1 and 0
 set_target(Y_train)
 set_target(Y_test)
@@ -159,15 +155,12 @@ set_target(Y_val)
 num_features = X_train.shape[1]
 w = np.zeros((num_features, 1))
 
-
-
 #output = forward_pass(X_train, w)
 #plot_error_function(Y_train, output)
 
-
-epochs = 5
-batch_size = 1 #stochastic
-learning_rate = 0.000000002
+epochs = 2
+batch_size = 10
+learning_rate = 0.000001
 
 TRAINING_STEP = []
 TRAIN_LOSS = []
