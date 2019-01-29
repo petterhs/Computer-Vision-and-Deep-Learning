@@ -1,9 +1,6 @@
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 import mnist
-
 
 #Create a random validation set out of a % of the train data
 def train_val_split(X_set, Y_set, val_percentage):
@@ -56,14 +53,6 @@ def ce_loss(targets, outputs):
     assert targets.shape == outputs.shape
     error = targets*np.log(outputs) + (1-targets)*np.log(1-outputs);
     return -error.mean()
-
-
-def plot_error_function(targets, outputs):
-    assert targets.shape == outputs.shape
-    error = targets*np.log(outputs) + (1-targets)*np.log(1-outputs);
-    plt.plot(-error)
-    plt.ylabel('error')
-    plt.show()
 
 #Computing output values
 def forward_pass(x, w):
@@ -127,7 +116,7 @@ def test_classification(X_set, Y_set, weights):
 
 
 
-#Run only once
+##Run only once
 #mnist.init()
 
 X_train, Y_train, X_test, Y_test = mnist.load()
@@ -155,9 +144,7 @@ set_target(Y_val)
 num_features = X_train.shape[1]
 w = np.zeros((num_features, 1))
 
-#output = forward_pass(X_train, w)
-#plot_error_function(Y_train, output)
-
+#Hyperparameters
 epochs = 2
 batch_size = 10
 learning_rate = 0.000001
@@ -170,6 +157,7 @@ PERCENT_CLASSIFIED_CORRECT_TRAIN = []
 PERCENT_CLASSIFIED_CORRECT_VAL = []
 PERCENT_CLASSIFIED_CORRECT_TEST = []
 
+#Run training loop
 w = training_loop(w, epochs, batch_size, learning_rate)
 
 #Plot Cross Entropy Loss function
@@ -180,11 +168,11 @@ plt.xlabel("Training steps")
 plt.plot(TRAINING_STEP, TRAIN_LOSS, label="Training loss")
 plt.plot(TRAINING_STEP, VAL_LOSS, label="Validation loss")
 plt.plot(TRAINING_STEP, TEST_LOSS, label="Test loss")
-plt.legend() # Shows graph labels
+plt.legend()
 plt.show()
 
 
-#Plot percent
+#Plot percent classified correctly
 plt.figure(figsize=(12, 8 ))
 plt.ylim([0, 1])
 plt.ylabel("Percentage Classified Correctly ")
@@ -192,11 +180,16 @@ plt.xlabel("Training steps")
 plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_TRAIN, label="Training set")
 plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_VAL, label="Validation set")
 plt.plot(TRAINING_STEP, PERCENT_CLASSIFIED_CORRECT_TEST, label="Test set")
-plt.legend() # Shows graph labels
+plt.legend()
 plt.show()
 
 
-#Final percentage
-print('Training percentage correct:', test_classification(X_train, Y_train, w))
-print('Valuation percentage correct:', test_classification(X_val, Y_val, w))
-print('Test percentage correct:', test_classification(X_test, Y_test, w))
+#Final loss results
+print('Training loss result:', TRAIN_LOSS[-1])
+print('Valuation loss result:', VAL_LOSS[-1])
+print('Test loss result:', TEST_LOSS[-1])
+
+#Final percentage results
+print('Training percentage correct result:', test_classification(X_train, Y_train, w))
+print('Valuation percentage correct result:', test_classification(X_val, Y_val, w))
+print('Test percentage correct result:', test_classification(X_test, Y_test, w))
