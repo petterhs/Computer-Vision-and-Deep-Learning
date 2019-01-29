@@ -128,12 +128,12 @@ def plot_avg_weights_and_pics(X_set, Y_set, weight):
         imgplot = plt.imshow(avg_weight)
     plt.show()
 
-##      MAIN        ##
 
-
-##Run only once
+##      Run only once       ##
 #mnist.init()
 
+
+##      Initialize      ##
 X_train, Y_train, X_test, Y_test = mnist.load()
 
 #Split X_train set into X_train and validation set
@@ -155,6 +155,7 @@ X_test, Y_test = prepare_sets(X_test, Y_test, classes)
 num_features = X_train.shape[1]
 w = np.zeros((num_features, 10))
 
+
 ##      Hyperparameters     ##
 epochs = 2
 batch_size = 10
@@ -168,7 +169,8 @@ PERCENT_CLASSIFIED_CORRECT_TRAIN = []
 PERCENT_CLASSIFIED_CORRECT_VAL = []
 PERCENT_CLASSIFIED_CORRECT_TEST = []
 
-#       Run training loop || Takes 1-2 min      ##
+
+##       Run training loop || Takes 1-2 min      ##
 w = training_loop(w, epochs, batch_size, learning_rate, reg_strength)
 
 

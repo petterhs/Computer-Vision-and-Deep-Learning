@@ -60,6 +60,7 @@ def forward_pass(x, w):
     g = 1 /(1 + np.exp(-a))
     return g
 
+#Gradient decent for Logistic Regression
 def gradient_decent(X_batch, outputs, targets, weights, learning_rate):
     N = X_batch.shape[0]
     assert outputs.shape == targets.shape
@@ -104,6 +105,7 @@ def training_loop(weights, epochs, batch_size, learning_rate):
                 PERCENT_CLASSIFIED_CORRECT_VAL.append(test_classification(X_val, Y_val, weights))
     return weights
 
+#Test percent classified correctly
 def test_classification(X_set, Y_set, weights):
     numberOfCorrect = 0
     outputs = forward_pass(X_set, weights)
@@ -116,17 +118,19 @@ def test_classification(X_set, Y_set, weights):
 
 
 
-##Run only once
+##      Run only once       ##
 #mnist.init()
 
+
+##      Initialize      ##
 X_train, Y_train, X_test, Y_test = mnist.load()
 
 #Split X_train set into X_train and validation set
 X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.1)
 
 #Resize
-X_test = X_test[2000:]
-Y_test = Y_test[2000:]
+X_test = X_test[8000:]
+Y_test = Y_test[8000:]
 X_train = X_train[:20000]
 Y_train = Y_train[:20000]
 
@@ -144,11 +148,10 @@ set_target(Y_val)
 num_features = X_train.shape[1]
 w = np.zeros((num_features, 1))
 
-#Hyperparameters
+##      Hyperparameters     ##
 epochs = 2
 batch_size = 10
 learning_rate = 0.000001
-
 TRAINING_STEP = []
 TRAIN_LOSS = []
 VAL_LOSS = []
@@ -159,6 +162,9 @@ PERCENT_CLASSIFIED_CORRECT_TEST = []
 
 #Run training loop
 w = training_loop(w, epochs, batch_size, learning_rate)
+
+
+##      2.1a)       #
 
 #Plot Cross Entropy Loss function
 plt.figure(figsize=(12, 8 ))
@@ -171,6 +177,8 @@ plt.plot(TRAINING_STEP, TEST_LOSS, label="Test loss")
 plt.legend()
 plt.show()
 
+
+##      2.1b)       ##
 
 #Plot percent classified correctly
 plt.figure(figsize=(12, 8 ))
