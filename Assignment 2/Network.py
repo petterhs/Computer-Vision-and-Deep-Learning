@@ -24,7 +24,7 @@ class Network:
         self.PERCENT_CLASSIFIED_CORRECT_VAL = []
         self.PERCENT_CLASSIFIED_CORRECT_TEST = []
 
-        self.INCREASING = []
+        self.INCREASING = [0]
 
     def feedforward(self, inputs):
         #Makes predictions for the output layer
@@ -72,9 +72,9 @@ class Network:
 			####
 
             #early stopping
-            #early_stopping = self.early_stopping(training_it, val_loss)
-            # if (early_stopping):
-            #     break
+            early_stopping = self.early_stopping(training_it, val_loss)
+            if (early_stopping):
+                break
 
             print("Epochs", epoch)
 
@@ -103,8 +103,8 @@ class Network:
         self.weights[0] -= learning_rate*dw_hidden.T
 
 
-    def cross_entropy_loss(self, data):
-        inputs, targets = self.unZip(data)
+    def cross_entropy_loss(self, data_set):
+        inputs, targets = self.unZip(data_set)
 
         #Only the first element of feedforward
         prediction = self.feedforward(inputs)[0]
@@ -133,21 +133,19 @@ class Network:
                 numberOfCorrect += 1
         return numberOfCorrect / Y_set.shape[0]
 
+    def early_stopping(self, training_it, val_loss):
+        if  val_loss > self.INCREASING[-1] & training_it > 20:
+            self.INCREASING.append(val_loss)
+            if (len(self.INCREASING) > 4):
 
-    # def early_stopping(self, training_it, val_loss):
-    #     if val_loss > self.INCREASING[-1] & training_it > 20:
-    #         self.INCREASING.append(val_loss)
-    #         if (len(self.INCREASING) > 3):
-    #
-    #             #Removing the last 3 elements to get the minima (BUNNPUNKT PÅ NORSK)
-    #             self.TRAIN_LOSS = self.TRAIN_LOSS[-3:]
-    #             self.TEST_LOSS = self.TEST_LOSS[-3:]
-    #             self.VAL_LOSS = self.VAL_LOSS[-3:]
-    #             return True
-    #     else:
-    #         self.INCREASING = []
-    #
-    #         return False
+                #Removing the last 3 elements to get the minima (BUNNPUNKT PÅ NORSK)
+                self.TRAIN_LOSS = self.TRAIN_LOSS[-3:]
+                self.TEST_LOSS = self.TEST_LOSS[-3:]
+                self.VAL_LOSS = self.VAL_LOSS[-3:]
+                return True
+        else:
+            self.INCREASING = [0]
+            return False
 
     ## Task 3 funcions ##
     def train_shuffle(self, training_data):
