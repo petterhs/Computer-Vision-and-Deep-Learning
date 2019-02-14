@@ -1,3 +1,4 @@
+
 import numpy as np
 import random
 
@@ -11,6 +12,7 @@ class Network:
         self.num_layers = len(sizes)
 
         self.sizes = sizes
+        #self.biases = [np.random.randn(y,1) for y in sizes[1:]]
         self.weights = [np.random.randn(x,y) for x, y in zip(sizes[:-1], sizes[1:])]
         self.velocities = [0 for x, y in zip(sizes[:-1], sizes[1:])]
         self.TRAINING_STEP = []
@@ -24,73 +26,37 @@ class Network:
         self.PERCENT_CLASSIFIED_CORRECT_TEST = []
 
         self.INCREASING = [0]
-
     def feedforward(self, inputs):
         #Makes predictions for the output layer
         #Want to use sigmoid for hidden layer and
         #softmax for the output layer
 
         #Hidden layer
-        z_hidden = np.dot(inputs, self.weights[0])
+
+
+        z_hidden_2 = np.dot(inputs, self.weights[0])
+        a_hidden_2 = sigmoid(z_hidden_2)
+
+        z_hidden = np.dot(a_hidden_2, self.weights[1])
         a_hidden = sigmoid(z_hidden)
-        #a_hidden = improved_sigmoid(z_hidden)  ##Uncomment for task 3##
-        #a_hidden = ReLU(z_hidden)               ##Uncomment for task 5##
 
 
         #Output layer
-        z_output = np.dot(a_hidden, self.weights[1])
+        z_output = np.dot(a_hidden, self.weights[2])
+
         prediction = softmax(z_output)
-        return prediction, z_hidden, a_hidden
-    def check_gradient(self, data, nabla, epsilon = 0.01):
-        #The imported nabla is the calculated gradients by backpropagation
-        x, y = self.unZip(data)
-        normalization_factor = x.shape[0]*y.shape[1]
-        print("Check_gradient")
-        for i in range(self.num_layers-1):
 
-            w_real = np.copy(self.weights[i])
-
-            w = np.copy(self.weights[i])
-            dw = np.zeros_like(w)
-
-            for k in range(0, w.shape[0], 50):
-                for j in range(w.shape[1]):
-                    new_weight1, new_weight2 = np.copy(w), np.copy(w)
-                    new_weight1[k,j] += epsilon
-                    new_weight2[k,j] -= epsilon
-
-                    self.weights[i] = new_weight1
-                    loss1 = self.cross_entropy_loss(data)
-                    self.weights[i] = new_weight2
-                    loss2 = self.cross_entropy_loss(data)
-                    dw[k,j] = (loss1-loss2)/(2*epsilon)
-                    dw[k,j] /= normalization_factor
-
-
-
-            maximum_abosulte_difference = abs(nabla[i]-dw).max()
-            print(i)
-            assert maximum_abosulte_difference <= epsilon**2, "Absolute error was: {}".format(maximum_abosulte_difference)
-            print(maximum_abosulte_difference)
-            print("Done")
-
-            #Restore to original weight
-            self.weights[i] = w_real
+        return prediction, z_hidden_2, z_hidden, a_hidden_2, a_hidden
 
     def gradient_descent(self, training_data, test_data, val_data, epochs, mini_batch_size, learning_rate, check_step, momentum_parameter):
         #Parameters
         i = 0
         training_it = 0
-        should_check_gradient = False
         for epoch in range(epochs):
             mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, len(training_data), mini_batch_size)]
             for mini_batch in mini_batches:
                 training_it += 1
-                if i == 350:
-                    #should_check_gradient = True
-                    print(training_it)
-                self.backprop(mini_batch, learning_rate, momentum_parameter, should_check_gradient)
-                should_check_gradient = False
+                self.backprop(mini_batch, learning_rate, momentum_parameter)
 
                 if i % check_step == 0:
                     self.TRAINING_STEP.append(training_it)
@@ -108,9 +74,8 @@ class Network:
                     self.PERCENT_CLASSIFIED_CORRECT_TEST.append(self.test_classification(test_data))
                     self.PERCENT_CLASSIFIED_CORRECT_VAL.append(self.test_classification(val_data))
                 i += 1
-
             ## Task 3 ##
-            #training_data = self.train_shuffle(training_data)
+            training_data = self.train_shuffle(training_data)
 			####
 
             #early stopping
@@ -121,34 +86,46 @@ class Network:
             print("Epochs", epoch)
 
 
-    def backprop(self, mini_batch, learning_rate, momentum_parameter, should_check_gradient):
+    def backprop(self, mini_batch, learning_rate, momentum_parameter):
 
         x, y = self.unZip(mini_batch)
-        normalization_factor = x.shape[0]*y.shape[1]
+        normailization_factor = x.shape[0]*y.shape[1]
 
-        predictions, z_hidden, a_hidden = self.feedforward(x)
+        predictions, z_hidden_2, z_hidden, a_hidden_2, a_hidden = self.feedforward(x)
 
         delta_k = self.cost_derivative(predictions, y)
 
         #OUTPUT LAYER
         dw_out = np.dot(a_hidden.T, delta_k)
-        dw_out /= normalization_factor
+        dw_out /= normailization_factor
 
         #HIDDEN LAYER
-        delta_j = sigmoid_prime(z_hidden.T)*np.dot(self.weights[1], delta_k.T)
-        #delta_j = improved_sigmoid_prime(z_hidden.T)*np.dot(self.weights[1], delta_k.T) #Use this in task 3
-        #delta_j = ReLU_prime(z_hidden.T)*np.dot(self.weights[1], delta_k.T)            #Use this in task 5
+        delta_j = sigmoid_prime(z_hidden.T)*np.dot(self.weights[2], delta_k.T)
+        #delta_j = improved_sigmoid_prime(z_hidden.T)*np.dot(self.weights[2], delta_k.T) #Use this in task 3
+        #delta_j = ReLU_prime(z_hidden.T)*np.dot(self.weights[2], delta_k.T)            #Use this in task 5
 
-        dw_hidden = np.dot(delta_j, x)
-        dw_hidden /= normalization_factor
+        dw_hidden = np.dot(delta_j, a_hidden_2)
+        dw_hidden /= normailization_factor
 
-        self.velocities[0] = momentum_parameter *self.velocities[0] - learning_rate*dw_hidden.T
-        self.velocities[1] = momentum_parameter *self.velocities[1] - learning_rate*dw_out
 
+        #HIDDEN LAYER 2
+        delta_j_2 = sigmoid_prime(z_hidden_2.T)*np.dot(self.weights[1], delta_j)
+        #delta_j = improved_sigmoid_prime(z_hidden_2.T)*np.dot(self.weights[1], delta_k.T) #Use this in task 3
+        #delta_j = ReLU_prime(z_hidden_2.T)*np.dot(self.weights[1], delta_k.T)            #Use this in task 5
+
+        dw_hidden_2 = np.dot(delta_j_2, x)
+        dw_hidden_2 /= normailization_factor
+
+
+        #3d - Nesterov momentum
+        self.velocities[0] = momentum_parameter *self.velocities[0] - learning_rate*dw_hidden_2.T
+        self.velocities[1] = momentum_parameter *self.velocities[1] - learning_rate*dw_hidden.T
+        self.velocities[2] = momentum_parameter *self.velocities[2] - learning_rate*dw_out
+
+        self.weights[2] += self.velocities[2]
         self.weights[1] += self.velocities[1]
         self.weights[0] += self.velocities[0]
-        if should_check_gradient:
-            self.check_gradient(mini_batch, [dw_hidden.T,dw_out])
+
 
 
     def cross_entropy_loss(self, data_set):
@@ -232,7 +209,6 @@ def improved_sigmoid_prime(z):
     temp = np.power((np.exp(-k)+np.exp(k)),2)
     out = 4.57573/temp
     return out
-    #return 1.7159*(1-np.tanh((2/3)*z)**2)
 
 def ReLU(z):
     return np.maximum(z, 0)

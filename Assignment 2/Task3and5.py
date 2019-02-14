@@ -1,19 +1,26 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import mnist
-import tqdm
 
 from Network import Network
-from Network import sigmoid
+
+"""
+TASK 3
+    In this code we can:
+    1. Shuffle the training set after each epoch. HOW TO: uncomment line 73 in gradient_descent in Network.py
+    2. Use improved version of sigmoid. HOW TO: uncomment line in backprop and feedforward in Network.py
+    3. Start with normal_distributed_weights. HOW TO: uncomment line after net = Network(sizes) in this file.
+    4. Nesterov momentum from last assignment. HOW TO: Change momentum_parameter in hyperparameter from 0 to 0.9 in this file
+"""
+"""
+TASK 5
+In this task we use the ReLU activation function
+
+TO DO: uncomment line in backprop and feedforward in Network.py
+"""
+
 
 def train_val_split(X, Y, val_percentage):
-  """
-    Selects samples from the dataset randomly to be in the validation set. Also, shuffles the train set.
-    --
-    X: [N, num_features] numpy vector,
-    Y: [N, 1] numpy vector
-    val_percentage: amount of data to put in validation set
-  """
   dataset_size = X.shape[0]
   idx = np.arange(0, dataset_size)
   np.random.shuffle(idx)
@@ -59,25 +66,28 @@ def main():
     #X_train is 54000 and X_val is 6000
     X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.1)
 
+    X_train = bias_trick(X_train)
+    X_val = bias_trick(X_val)
+    X_test = bias_trick(X_test)
 
     training_data = list(zip(X_train,Y_train))
     test_data = list(zip(X_test,Y_test))
     val_data = list(zip(X_val, Y_val))
 
     #Hyperparameters
-
     INPUT_NODES = 784
     HIDDEN_LAYER_NODES = 64
     OUTPUT_NODES = 10
-    sizes = [INPUT_NODES, HIDDEN_LAYER_NODES, OUTPUT_NODES]
+    sizes = [INPUT_NODES+1, HIDDEN_LAYER_NODES+1, OUTPUT_NODES]
     epochs = 10
     batch_size = 128
     check_step = X_train.shape[0]/(batch_size*100)
     learning_rate = 0.9
+    momentum_parameter = 0 # Change this to 0.9 in 3d
 
     net = Network(sizes)
-
-    net.gradient_descent(training_data, test_data, val_data, epochs, batch_size, learning_rate, check_step)
+    #net.normal_distributed_weights(INPUT_NODES+1, HIDDEN_LAYER_NODES+1, OUTPUT_NODES)  #Uncomment this in 3c
+    net.gradient_descent(training_data, test_data, val_data, epochs, batch_size, learning_rate, check_step, momentum_parameter)
 
     plt.plot(net.TRAINING_STEP, net.TRAIN_LOSS, label="Training loss")
     plt.plot(net.TRAINING_STEP, net.TEST_LOSS, label="Testing loss")
